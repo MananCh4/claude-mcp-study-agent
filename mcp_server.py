@@ -1,4 +1,4 @@
-from mcp.server.fastmcp import FastMCP
+from fastmcp import FastMCP
 from server import add_subject, generate_plan, update_progress
 
 mcp = FastMCP("study-planner")

@@ -5,7 +5,11 @@ from datetime import datetime
 # FILE HANDLING
 
 
-DATA_FILE = "data.json"
+
+import os
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_FILE = os.path.join(BASE_DIR, "data.json")
 
 def load_data():
     try:
