@@ -1,113 +1,167 @@
 import json
-from datetime import datetime, timedelta
+from datetime import datetime
 
-#FILE HANDLING
 
-data_file = 'data.json'
+# FILE HANDLING
+
+
+DATA_FILE = "data.json"
 
 def load_data():
     try:
-        with open(data_file, 'r') as f:
+        with open(DATA_FILE, "r") as f:
             return json.load(f)
-        
     except:
         return {
-            "subjects" : [],
-            "progress" : {}
+            "subjects": [],
+            "progress": {}
         }
-    
 
 def save_data(data):
-    with open(data_file, 'w')as f:
+    with open(DATA_FILE, "w") as f:
         json.dump(data, f, indent=4)
 
-#MAIN FEATURES
+# MAIN FEATURES
+
 
 def add_subject(subject, deadline):
     data = load_data()
-    subject = {
-        "name" : subject,
+
+    new_subject = {
+        "name": subject,
         "deadline": deadline
     }
 
-    data["subjects"].append(subject)
+    data["subjects"].append(new_subject)
     save_data(data)
 
-    print( f"Subject '{subject}' added with deadline {deadline}" )
+    return f"✅ Subject '{subject}' added with deadline {deadline}"
+
+
 
 def generate_plan():
     data = load_data()
     today = datetime.today()
+
     plan = []
 
     for subj in data["subjects"]:
-        deadline = datetime.strptime(subj["deadline"],"%Y-%m-%d")
+        deadline = datetime.strptime(subj["deadline"], "%Y-%m-%d")
         days_left = (deadline - today).days
 
-        if days_left > 0:
+        # Skip expired subjects
+        if days_left <= 0:
             continue
 
-        daily_task = f"Study {subj['name']} ({days_left} days left)"
+        daily_task = f"📖 Study {subj['name']} ({days_left} days left)"
         plan.append(daily_task)
-    
-        if not plan:
-            return "No active subjects."
-    
-        return "\n".join(plan)
+
+    # After loop
+    if not plan:
+        return "⚠️ No active subjects."
+
+    return "\n".join(plan)
 
 
-# Mark progress
+
 def update_progress(subject):
     data = load_data()
-    
     today = str(datetime.today().date())
-    
+
     if subject not in data["progress"]:
         data["progress"][subject] = []
-    
-    data["progress"][subject].append(today)
+
+    # Prevent duplicate entry for same day
+    if today not in data["progress"][subject]:
+        data["progress"][subject].append(today)
+
     save_data(data)
-    
-    return f"Progress is updated for {subject}"
+
+    return f"✅ Progress updated for {subject}"
 
 
 
-# Get today's tasks
 def get_today_tasks():
     return generate_plan()
+
+
+# COMMAND HANDLER
+
 
 def handle_command(command):
     parts = command.split(" ", 1)
     cmd = parts[0].lower()
-    
+
     if cmd == "add":
         try:
             name, deadline = parts[1].split("|")
             return add_subject(name.strip(), deadline.strip())
         except:
-            return "Format: add <subject>|YYYY-MM-DD"
-    
+            return "❌ Format: add <subject>|YYYY-MM-DD"
+
     elif cmd == "plan":
         return generate_plan()
-    
+
     elif cmd == "done":
-        return update_progress(parts[1].strip())
-    
+        try:
+            return update_progress(parts[1].strip())
+        except:
+            return "❌ Format: done <subject>"
+
     elif cmd == "today":
         return get_today_tasks()
-    
+
+    elif cmd == "help":
+        return HELP_TEXT
+
     else:
-        return "Commands: add, plan, done, today"
+        return "❌ Unknown command. Type 'help' to see available commands."
+
+
+# HELP / INTRO TEXT
+
+
+HELP_TEXT = """
+📚 AI Study Planner
+
+Commands you can use:
+
+1. Add a subject:
+   add <subject>|YYYY-MM-DD
+   Example: add Calculus|2026-04-01
+
+2. View study plan:
+   plan
+
+3. Mark study progress:
+   done <subject>
+   Example: done Calculus
+
+4. View today's tasks:
+   today
+
+5. Show help:
+   help
+
+6. Exit:
+   exit
+
+----------------------------------------
+"""
+
+
+# RUN PROGRAM
 
 
 if __name__ == "__main__":
-    print("AI Study Planner Running (type 'exit' to quit)")
-    
+    print(HELP_TEXT)
+
     while True:
         user_input = input(">> ")
-        
+
         if user_input.lower() == "exit":
+            print("👋 Exiting Study Planner. Stay consistent!")
             break
-        
+
         response = handle_command(user_input)
         print(response)
